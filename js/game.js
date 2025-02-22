@@ -74,6 +74,11 @@ export class GameScene extends Phaser.Scene {
                 position: { x: this.player.container.x, y: this.player.container.y }
             }));
             // Start periodic ping every 5 seconds.
+            const pingMsg = {
+                type: "ping",
+                clientTime: Date.now()
+            };
+            this.socket.send(JSON.stringify(pingMsg));
             this.pingInterval = setInterval(() => {
                 const pingMsg = {
                     type: "ping",
