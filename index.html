@@ -6,6 +6,13 @@
   <title>Phaser Game with HTML Scoreboard</title>
   <!-- Redirect to login if not authenticated -->
   <script>
+    // Check if the page was reloaded
+    if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+      // Clear the loggedIn status when the page is reloaded
+      localStorage.removeItem('loggedIn');
+    }
+
+    // If not logged in, redirect to the login page
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
