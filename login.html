@@ -13,7 +13,6 @@
   <link rel="modulepreload" href="js/updater.js">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap');
-
     body {
       font-family: 'Nunito', sans-serif;
       background: linear-gradient(135deg, #e0f7ff, #99ccff);
@@ -23,7 +22,6 @@
       height: 100vh;
       margin: 0;
     }
-
     #login-container {
       background: rgba(255, 255, 255, 0.9);
       padding: 20px;
@@ -32,13 +30,11 @@
       width: 320px;
       text-align: center;
     }
-
     h2 {
       color: #00509e;
       font-size: 22px;
       margin-bottom: 16px;
     }
-
     input[type="text"] {
       width: 100%;
       padding: 12px;
@@ -52,11 +48,9 @@
       outline: none;
       box-sizing: border-box;
     }
-
     input[type="text"]::placeholder {
       color: #6699cc;
     }
-
     button {
       width: 100%;
       padding: 12px;
@@ -69,7 +63,6 @@
       font-weight: bold;
       transition: 0.3s;
     }
-
     button:hover {
       background: #003366;
     }
@@ -84,14 +77,13 @@
     </form>
   </div>
   <script>
-    // Login form handling
     document.getElementById('login-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const username = document.getElementById('username').value;
       if (username.trim()) {
         localStorage.setItem('loggedIn', 'true');
         localStorage.setItem('playerName', username);
-        window.location.href = "index.html"; // Redirect to game page
+        window.location.href = "index.html";
       } else {
         alert("Please enter your name! ☃️");
       }

@@ -5,11 +5,13 @@ import {
     MAX_SNOWBALL_RADIUS,
     CHARGE_OFFSET_DISTANCE,
     SNOWBALL_SPEED,
+    SNOWBALL_LIFE_LENGTH,
     MAX_SNOWBALL_SPEED,
     INITIAL_SNOWBALL_DAMAGE,
     MAX_SNOWBALL_DAMAGE,
     FIXED_VIEW_WIDTH,
-    FIXED_VIEW_HEIGHT
+    FIXED_VIEW_HEIGHT,
+    SNOWBALL_COOLDOWN
 } from "./constants.js";
 import { createPlayer } from "./player.js";
 import { createSnowball } from "./snowball.js";
@@ -20,11 +22,10 @@ import { sendPositionUpdate, handleServerMessage } from "./network.js";
 export class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: "GameScene" });
-        this.serverTimeOffset = 0; // Initial offset is 0
+        this.serverTimeOffset = 0;
     }
 
     preload() {
-        // Preload images using cache if available
         this.load.image("tiles", localStorage.getItem("assets/tiny-ski.png") || "assets/tiny-ski.png");
         this.load.tilemapTiledJSON("map", localStorage.getItem("assets/small-ski.tmj") || "assets/small-ski.tmj");
     }
@@ -47,7 +48,8 @@ export class GameScene extends Phaser.Scene {
         const spawnMargin = 20;
         const randomX = Phaser.Math.Between(spawnMargin, this.mapWidth - spawnMargin);
         const randomY = Phaser.Math.Between(spawnMargin, this.mapHeight - spawnMargin);
-        const player = createPlayer(this, randomX, randomY);
+        const username = localStorage.getItem("playerName") || "Unknown";
+        const player = createPlayer(this, randomX, randomY, username);
         player.id = crypto.randomUUID();
         this.cameras.main.startFollow(player.container, true);
 
@@ -55,6 +57,7 @@ export class GameScene extends Phaser.Scene {
         this.players = {};
         this.isAlive = true;
         this.currentHealth = 100;
+        this.lastFireTime = 0;
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -67,24 +70,17 @@ export class GameScene extends Phaser.Scene {
         this.socket = new WebSocket('wss://localhost:12345');
         this.socket.onopen = () => {
             console.log("Connected to server");
-            // Send join message.
             this.socket.send(JSON.stringify({
                 type: "join",
                 id: this.player.id,
                 position: { x: this.player.container.x, y: this.player.container.y },
                 timeUpdate: Date.now() + (this.serverTimeOffset || 0),
+                username: username
             }));
-            // Start periodic ping every 5 seconds.
-            const pingMsg = {
-                type: "ping",
-                clientTime: Date.now()
-            };
+            const pingMsg = { type: "ping", clientTime: Date.now() };
             this.socket.send(JSON.stringify(pingMsg));
             this.pingInterval = setInterval(() => {
-                const pingMsg = {
-                    type: "ping",
-                    clientTime: Date.now()
-                };
+                const pingMsg = { type: "ping", clientTime: Date.now() };
                 this.socket.send(JSON.stringify(pingMsg));
             }, 5000);
         };
@@ -114,9 +110,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     startCharging() {
-        if (!this.isAlive || this.isCharging) return;
+        const currentTime = this.time.now;
+        if (!this.isAlive || this.isCharging || currentTime - this.lastFireTime < SNOWBALL_COOLDOWN) return;
         this.isCharging = true;
-        this.chargeStartTime = this.time.now;
+        this.chargeStartTime = currentTime;
         const pointer = this.input.activePointer;
         const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const direction = new Phaser.Math.Vector2(
@@ -125,8 +122,6 @@ export class GameScene extends Phaser.Scene {
         ).normalize();
         this.player.chargingDirection = direction;
 
-        // Create a new snowball object that will later be fired.
-        // Its id remains the same throughout charging and firing.
         const snowballId = "snowball_" + this.player.id + "_" + Date.now();
         this.player.snowball = this.add
             .circle(
@@ -141,9 +136,8 @@ export class GameScene extends Phaser.Scene {
         this.player.snowball.charging = true;
 
         this.physics.world.enable(this.player.snowball);
-        this.snowballs.add(this.player.snowball); // Now it will appear in getChildren()
+        this.snowballs.add(this.player.snowball);
 
-        // Inform the server about the new charging snowball.
         if (this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify({
                 type: "movement",
@@ -160,9 +154,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     fireSnowball() {
-        if (!this.isCharging || !this.player.snowball) return;
+        const currentTime = this.time.now;
+        if (!this.isCharging || !this.player.snowball || currentTime - this.lastFireTime < SNOWBALL_COOLDOWN) return;
 
-        const chargeTime = this.time.now - this.chargeStartTime;
+        this.lastFireTime = currentTime;
+        const chargeTime = currentTime - this.chargeStartTime;
         const chargeFactor = Math.min(chargeTime / CHARGE_MAX_TIME, 1);
         const finalRadius = Phaser.Math.Linear(INITIAL_SNOWBALL_RADIUS, MAX_SNOWBALL_RADIUS, chargeFactor);
         const finalSpeed = Phaser.Math.Linear(SNOWBALL_SPEED, MAX_SNOWBALL_SPEED, chargeFactor);
@@ -177,17 +173,11 @@ export class GameScene extends Phaser.Scene {
             this.snowballs.add(this.player.snowball);
         }
 
-        // Set the snowball's velocity using the charged speed
-        this.player.snowball.body.setVelocity(
-            direction.x * finalSpeed,
-            direction.y * finalSpeed
-        );
-        // Adjust the snowball's size based on charge time
+        this.player.snowball.body.setVelocity(direction.x * finalSpeed, direction.y * finalSpeed);
         this.player.snowball.setRadius(finalRadius);
         this.player.snowball.charging = false;
-        this.player.snowball.setAlpha(1); // Update appearance if needed
+        this.player.snowball.setAlpha(1);
 
-        // Send the updated snowball data to the server including damage
         if (this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify({
                 type: "movement",
@@ -199,7 +189,7 @@ export class GameScene extends Phaser.Scene {
                 damage: finalDamage,
                 charging: false,
                 timeUpdate: Date.now() + (this.serverTimeOffset || 0),
-                lifeLength: 3000
+                lifeLength: SNOWBALL_LIFE_LENGTH - 100
             }));
         }
 

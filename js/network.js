@@ -5,8 +5,8 @@ export function sendPositionUpdate(scene, socket, player, velocityX, velocityY) 
         scene.lastSentPosition = { x: player.container.x, y: player.container.y };
     }
     const posChanged =
-        Math.abs(player.container.x - scene.lastSentPosition.x) > 0.5 ||
-        Math.abs(player.container.y - scene.lastSentPosition.y) > 0.5;
+         Math.abs(player.container.x - scene.lastSentPosition.x) > 0.5 ||
+         Math.abs(player.container.y - scene.lastSentPosition.y) > 0.5;
 
     if (posChanged && socket.readyState === WebSocket.OPEN) {
         const updateMsg = {
@@ -24,16 +24,13 @@ export function sendPositionUpdate(scene, socket, player, velocityX, velocityY) 
 
 export function handleServerMessage(event) {
     const data = JSON.parse(event.data);
-    // console.log("Received: ", data);
     switch (data.messageType) {
         case "pong": {
-            // Calculate round-trip time (RTT) and offset.
             const T3 = Date.now();
             const T1 = data.clientTime;
             const T2 = data.serverTime;
             const rtt = T3 - T1;
             const offset = T2 - (T1 + rtt / 2);
-            // Store the offset in the scene.
             this.serverTimeOffset = offset;
             console.log("Calculated server time offset:", offset);
             return;

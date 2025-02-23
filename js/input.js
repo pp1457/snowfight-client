@@ -2,17 +2,15 @@ import {
     CHARGE_OFFSET_DISTANCE,
     INITIAL_SNOWBALL_RADIUS,
     CHARGE_MAX_TIME,
-    MAX_SNOWBALL_RADIUS
+    MAX_SNOWBALL_RADIUS,
+    SNOWBALL_LIFE_LENGTH
 } from "./constants.js";
 
 export function anyKeyIsDown(keys) {
     return keys.some(key => key.isDown);
 }
 
-export function updateMovement(scene, cursors, keyA, keyD, keyW, keyS, player) {
-    // Reset velocity before applying new movement.
-    player.container.body.setVelocity(0);
-
+function getInputDirection(cursors, keyA, keyD, keyW, keyS) {
     const leftKeys = [cursors.left, keyA];
     const rightKeys = [cursors.right, keyD];
     const upKeys = [cursors.up, keyW];
@@ -33,62 +31,66 @@ export function updateMovement(scene, cursors, keyA, keyD, keyW, keyS, player) {
         velocityY = 1;
     }
 
-    // Normalize diagonal movement.
+    return { velocityX, velocityY };
+}
+
+export function updateMovement(scene, cursors, keyA, keyD, keyW, keyS, player) {
+    player.container.body.setVelocity(0);
+
+    const { velocityX, velocityY } = getInputDirection(cursors, keyA, keyD, keyW, keyS);
+
+    let finalVx = velocityX;
+    let finalVy = velocityY;
+
     if (velocityX !== 0 && velocityY !== 0) {
         const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-        velocityX /= magnitude;
-        velocityY /= magnitude;
+        finalVx /= magnitude;
+        finalVy /= magnitude;
     }
 
     const speed = scene.registry.get("PLAYER_SPEED");
-    const finalVx = velocityX * speed;
-    const finalVy = velocityY * speed;
+    finalVx *= speed;
+    finalVy *= speed;
     player.container.body.setVelocity(finalVx, finalVy);
 
     return { velocityX: finalVx, velocityY: finalVy };
 }
 
 export function updateChargingIndicator(scene, player, chargeStartTime, isCharging) {
-    if (isCharging && player.snowball) {
-        // Get the pointer and calculate the direction from the player to the pointer.
-        const pointer = scene.input.activePointer;
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const direction = new Phaser.Math.Vector2(
-            worldPoint.x - player.container.x,
-            worldPoint.y - player.container.y
-        ).normalize();
+    if (!isCharging || !player.snowball) return;
 
-        // Save the direction for future use.
-        player.chargingDirection = direction;
+    const pointer = scene.input.activePointer;
+    const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const direction = new Phaser.Math.Vector2(
+        worldPoint.x - player.container.x,
+        worldPoint.y - player.container.y
+    ).normalize();
 
-        // Calculate the new position using the fixed offset.
-        const newX = player.container.x + direction.x * CHARGE_OFFSET_DISTANCE;
-        const newY = player.container.y + direction.y * CHARGE_OFFSET_DISTANCE;
+    player.chargingDirection = direction;
 
-        // Compute the new radius based on how long the player has been charging.
-        const chargeTime = scene.time.now - chargeStartTime;
-        const newRadius = Phaser.Math.Linear(
-            INITIAL_SNOWBALL_RADIUS,
-            MAX_SNOWBALL_RADIUS,
-            Math.min(chargeTime / CHARGE_MAX_TIME, 1)
-        );
+    const newX = player.container.x + direction.x * CHARGE_OFFSET_DISTANCE;
+    const newY = player.container.y + direction.y * CHARGE_OFFSET_DISTANCE;
 
-        // Update the snowball's position and size.
-        player.snowball.setPosition(newX, newY);
-        player.snowball.setRadius(newRadius);
+    const chargeTime = scene.time.now - chargeStartTime;
+    const newRadius = Phaser.Math.Linear(
+        INITIAL_SNOWBALL_RADIUS,
+        MAX_SNOWBALL_RADIUS,
+        Math.min(chargeTime / CHARGE_MAX_TIME, 1)
+    );
 
-        // Send update to the server so others see the charging state.
-        if (scene.socket.readyState === WebSocket.OPEN) {
-            scene.socket.send(JSON.stringify({
-                type: "movement",
-                objectType: "snowball",
-                id: player.snowball.id, // Use the same id throughout.
-                position: { x: newX, y: newY },
-                size: newRadius,
-                timeUpdate: Date.now() + (scene.serverTimeOffset || 0),
-                lifeLength: 50,
-                charging: true
-            }));
-        }
+    player.snowball.setPosition(newX, newY);
+    player.snowball.setRadius(newRadius);
+
+    if (scene.socket.readyState === WebSocket.OPEN) {
+        scene.socket.send(JSON.stringify({
+            type: "movement",
+            objectType: "snowball",
+            id: player.snowball.id,
+            position: { x: newX, y: newY },
+            size: newRadius,
+            timeUpdate: Date.now() + (scene.serverTimeOffset || 0),
+            lifeLength: SNOWBALL_LIFE_LENGTH,
+            charging: true
+        }));
     }
 }
