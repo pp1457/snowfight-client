@@ -37,15 +37,25 @@ export function updateGameObject(scene, data) {
             if (data.id === scene.player.id) {
                 // Update local player's health
                 scene.player.updateHealth(data.newHealth || 0);
-                if (data.newHealth <= 0) {
+                if (data.isDead) {
                     // Display "Game Over" message and redirect after 2 seconds
-                    scene.add.text(400, 300, "Game Over", {
-                        fontSize: "32px",
-                        color: "#fff"
-                    });
+
+                    if (scene.player.snowball && scene.socket.readyState === WebSocket.OPEN) {
+                        scene.socket.send(JSON.stringify({
+                            type: "movement",
+                            objectType: "snowball",
+                            id: scene.player.snowball.id,
+                            size: 0,
+                            damage: 0,
+                            charging: false,
+                            timeEmission: Date.now() + (scene.serverTimeOffset || 0),
+                            lifeLength: 0
+                        }));
+                    }
+
                     setTimeout(() => {
                         window.location.href = "login.html";
-                    }, 2000);
+                    }, 0);
                 }
                 return;
             }

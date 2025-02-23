@@ -85,6 +85,8 @@ export function updateChargingIndicator(scene, player, chargeStartTime, isChargi
                 id: player.snowball.id, // Use the same id throughout.
                 position: { x: newX, y: newY },
                 size: newRadius,
+                timeUpdate: Date.now() + (scene.serverTimeOffset || 0),
+                lifeLength: 50,
                 charging: true
             }));
         }

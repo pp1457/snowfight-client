@@ -15,7 +15,7 @@ export function sendPositionUpdate(scene, socket, player, velocityX, velocityY) 
             id: player.id,
             position: { x: player.container.x, y: player.container.y },
             velocity: { x: velocityX, y: velocityY },
-            t: Date.now() + (scene.serverTimeOffset || 0),
+            timeUpdate: Date.now() + (scene.serverTimeOffset || 0),
         };
         socket.send(JSON.stringify(updateMsg));
         scene.lastSentPosition = { x: player.container.x, y: player.container.y };

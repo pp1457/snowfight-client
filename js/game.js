@@ -71,7 +71,8 @@ export class GameScene extends Phaser.Scene {
             this.socket.send(JSON.stringify({
                 type: "join",
                 id: this.player.id,
-                position: { x: this.player.container.x, y: this.player.container.y }
+                position: { x: this.player.container.x, y: this.player.container.y },
+                timeUpdate: Date.now() + (this.serverTimeOffset || 0),
             }));
             // Start periodic ping every 5 seconds.
             const pingMsg = {
@@ -135,6 +136,7 @@ export class GameScene extends Phaser.Scene {
                 0x000000
             )
             .setAlpha(0.8);
+
         this.player.snowball.id = snowballId;
         this.player.snowball.charging = true;
 
@@ -196,7 +198,7 @@ export class GameScene extends Phaser.Scene {
                 size: finalRadius,
                 damage: finalDamage,
                 charging: false,
-                timeEmission: Date.now() + (this.serverTimeOffset || 0),
+                timeUpdate: Date.now() + (this.serverTimeOffset || 0),
                 lifeLength: 3000
             }));
         }
