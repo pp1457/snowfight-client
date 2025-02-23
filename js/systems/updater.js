@@ -35,7 +35,7 @@ export function updateGameObject(scene, data) {
                 scene.player.updateHealth(data.newHealth || scene.player.health);
                 if (data.newHealth <= 0 && scene.isAlive) {
                     scene.add.text(400, 300, "Game Over", { fontSize: "32px", color: "#fff" });
-                    setTimeout(() => { window.location.href = "login.html"; }, 0);
+                    setTimeout(() => { window.location.href = "login.html"; }, 1000);
                 }
             } else {
                 // Remote player: create or update

@@ -19,6 +19,8 @@
       if (!currentSessionId) {
         const newSessionId = generateSessionId();
         sessionStorage.setItem('tabSessionId', newSessionId);
+        console.log("??????");
+
         return true;
       }
       

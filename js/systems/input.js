@@ -16,10 +16,10 @@ export function updateMovement(scene, cursors, keyA, keyD, keyW, keyS, player) {
     if (scene.socket.readyState === WebSocket.OPEN) {
         scene.socket.send(JSON.stringify({
             type: "movement",
-            objectType: "player"
+            objectType: "player",
             id: player.id,
             direction: inputState,
-            timestamp: Date.now() + (scene.serverTimeOffset || 0)
+            timeUpdate: Date.now() + (scene.serverTimeOffset || 0)
         }));
     }
 }

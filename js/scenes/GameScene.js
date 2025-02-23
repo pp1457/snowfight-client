@@ -53,13 +53,14 @@ export class GameScene extends Phaser.Scene {
 
         this.snowballs = this.physics.add.group();
 
-        this.socket = new WebSocket('wss://192.168.1.106:12345');
+        this.socket = new WebSocket('wss://localhost:12345');
         this.socket.onopen = () => {
             console.log("Connected to server");
             this.socket.send(JSON.stringify({
                 type: "join",
                 id: this.player.id,
-                position: { x: this.player.container.x, y: this.player.container.y }
+                position: { x: this.player.container.x, y: this.player.container.y },
+                timeUpdate: Date.now() + (this.serverTimeOffset || 0),
             }));
             const pingMsg = { type: "ping", clientTime: Date.now() };
             this.socket.send(JSON.stringify(pingMsg));
@@ -158,7 +159,7 @@ export class GameScene extends Phaser.Scene {
                 size: finalRadius,
                 damage: finalDamage,
                 charging: false,
-                timeEmission: Date.now() + (this.serverTimeOffset || 0),
+                timeUpdate: Date.now() + (this.serverTimeOffset || 0),
                 lifeLength: 3000
             }));
         }
