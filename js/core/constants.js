@@ -1,0 +1,15 @@
+export const PLAYER_SPEED = 200;
+export const CHARGE_MAX_TIME = 2000;
+export const INITIAL_SNOWBALL_RADIUS = 10;
+export const MAX_SNOWBALL_RADIUS = 20;
+export const CHARGE_OFFSET_DISTANCE = 30;
+export const PLAYER_RADIUS = 20;
+export const PLAYER_SIZE = 40;
+export const SNOWBALL_SPEED = 500;
+export const MAX_SNOWBALL_SPEED = 800;
+export const INITIAL_SNOWBALL_DAMAGE = 10;
+export const MAX_SNOWBALL_DAMAGE = 25;
+export const DRIFT_THRESHOLD = 1; // Not used since position is server-set
+export const DRIFT_LERP_FACTOR = 0.1; // Not used since position is server-set
+export const FIXED_VIEW_WIDTH = 1600;
+export const FIXED_VIEW_HEIGHT = 900;
