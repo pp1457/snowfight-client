@@ -4,18 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phaser Game with HTML Scoreboard</title>
-  <!-- Redirect to login if not authenticated -->
+  <!-- Enhanced authentication check -->
   <script>
-    // Check if the page was reloaded
-    if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
-      // Clear the loggedIn status when the page is reloaded
-      localStorage.removeItem('loggedIn');
-    }
+    // Generate a unique session ID for each tab
+    const generateSessionId = () => {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    };
 
-    // If not logged in, redirect to the login page
-    if (localStorage.getItem('loggedIn') !== 'true') {
-      window.location.href = 'login.html';
-    }
+    // Function to check if this is a new tab/window
+    const isNewTabOrWindow = () => {
+      const currentSessionId = sessionStorage.getItem('tabSessionId');
+      
+      // If no session ID exists, this is definitely a new tab
+      if (!currentSessionId) {
+        const newSessionId = generateSessionId();
+        sessionStorage.setItem('tabSessionId', newSessionId);
+        return true;
+      }
+      
+      return false;
+    };
+
+    // Always check authentication when page loads
+    const checkAuth = () => {
+      // Clear login status if it's a new tab
+      if (isNewTabOrWindow()) {
+        localStorage.removeItem('loggedIn');
+      }
+
+      // Check if user is logged in
+      if (localStorage.getItem('loggedIn') !== 'true') {
+        window.location.href = 'login.html';
+      }
+    };
+
+    // Run authentication check immediately
+    checkAuth();
+
+    // Also check when the page becomes visible (tab switching)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAuth();
+      }
+    });
   </script>
   <!-- Load Phaser from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.87.0/phaser.js"></script>
@@ -58,6 +89,6 @@
     <pre id="scoreboard-scores"></pre>
   </div>
   <!-- Load the main module (entry point) -->
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/core/main.js"></script>
 </body>
 </html>
