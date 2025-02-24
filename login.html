@@ -73,20 +73,29 @@
     <h2>Enter Your Name ❄️</h2>
     <form id="login-form">
       <input type="text" id="username" placeholder="Your Snowy Name" required>
+      <input type="text" id="serverIP" placeholder="Server IP Address" required>
       <button type="submit">Start Game ⛄</button>
     </form>
   </div>
   <script>
     document.getElementById('login-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      if (username.trim()) {
-        localStorage.setItem('loggedIn', 'true');
-        localStorage.setItem('playerName', username);
-        window.location.href = "index.html";
-      } else {
+      const username = document.getElementById('username').value.trim();
+      const serverIP = document.getElementById('serverIP').value.trim();
+
+      if (!username) {
         alert("Please enter your name! ☃️");
+        return;
       }
+      if (!serverIP) {
+        alert("Please enter the server IP address! 🌐");
+        return;
+      }
+
+      localStorage.setItem('loggedIn', 'true');
+      localStorage.setItem('playerName', username);
+      localStorage.setItem('serverIP', serverIP);
+      window.location.href = "index.html";
     });
   </script>
 </body>

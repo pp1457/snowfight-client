@@ -49,6 +49,7 @@ export class GameScene extends Phaser.Scene {
         const randomX = Phaser.Math.Between(spawnMargin, this.mapWidth - spawnMargin);
         const randomY = Phaser.Math.Between(spawnMargin, this.mapHeight - spawnMargin);
         const username = localStorage.getItem("playerName") || "Unknown";
+        const serverIP = localStorage.getItem("serverIP") || "localhost:12345";
         const player = createPlayer(this, randomX, randomY, username);
         player.id = crypto.randomUUID();
         this.cameras.main.startFollow(player.container, true);
@@ -67,7 +68,7 @@ export class GameScene extends Phaser.Scene {
 
         this.snowballs = this.physics.add.group();
 
-        this.socket = new WebSocket('wss://localhost:12345');
+        this.socket = new WebSocket(`wss://${serverIP}`);
         this.socket.onopen = () => {
             console.log("Connected to server");
             this.socket.send(JSON.stringify({
