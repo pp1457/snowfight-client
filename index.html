@@ -6,15 +6,21 @@
   <title>Phaser Game with HTML Scoreboard</title>
   <!-- Redirect to login if not authenticated -->
   <script>
-    // Check if the page was reloaded
-    if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
-      // Clear the loggedIn status when the page is reloaded
-      localStorage.removeItem('loggedIn');
-    }
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromLogin = urlParams.get('fromLogin');
 
-    // If not logged in, redirect to the login page
-    if (localStorage.getItem('loggedIn') !== 'true') {
+    // Clear sessionStorage on every load to ensure fresh state
+    sessionStorage.removeItem('loggedIn');
+
+    // If not coming from login, redirect to login.html
+    if (fromLogin !== 'true') {
       window.location.href = 'login.html';
+    } else {
+      // Set loggedIn in sessionStorage only if coming from login
+      sessionStorage.setItem('loggedIn', 'true');
+      // Optionally, clean up the URL (remove the parameter)
+      window.history.replaceState({}, document.title, 'index.html');
     }
   </script>
   <!-- Load Phaser from CDN -->

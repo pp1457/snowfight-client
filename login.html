@@ -92,10 +92,13 @@
         return;
       }
 
-      localStorage.setItem('loggedIn', 'true');
-      localStorage.setItem('playerName', username);
-      localStorage.setItem('serverIP', serverIP);
-      window.location.href = "index.html";
+      // Set sessionStorage for the current tab session
+      sessionStorage.setItem('loggedIn', 'true');
+      sessionStorage.setItem('playerName', username);
+      sessionStorage.setItem('serverIP', serverIP);
+
+      // Redirect to index.html with fromLogin parameter
+      window.location.href = "index.html?fromLogin=true";
     });
   </script>
 </body>
