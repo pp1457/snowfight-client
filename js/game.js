@@ -68,7 +68,7 @@ export class GameScene extends Phaser.Scene {
 
         this.snowballs = this.physics.add.group();
 
-        this.socket = new WebSocket(`ws://${serverIP}`);
+        this.socket = new WebSocket(`${serverIP}`);
         this.socket.onopen = () => {
             console.log("Connected to server");
             this.socket.send(JSON.stringify({

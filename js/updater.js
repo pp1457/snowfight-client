@@ -30,7 +30,6 @@ export function checkAlive(scene) {
     // Remove dead players
     Object.entries(scene.players).forEach(([id, player]) => {
         if (isDead(player, scene)) {
-            console.log("AHhhh I'm dead");
             player.container.destroy(true);
             delete scene.players[id];
         }
@@ -71,7 +70,7 @@ function handlePlayerUpdate(scene, data, currentTime) {
         scene.players[data.id] = player;
     }
 
-    player.expireDate = currentTime + 100;
+    player.expireDate = currentTime + 500;
     updatePlayerStatus(player, data);
     updatePlayerPosition(player, data);
     updatePlayerVelocity(player, data);
