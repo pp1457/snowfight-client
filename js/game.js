@@ -69,6 +69,7 @@ export class GameScene extends Phaser.Scene {
         this.snowballs = this.physics.add.group();
 
         this.socket = new WebSocket(`${serverIP}`);
+        this.socket.binaryType = 'arraybuffer';  // Receive binary data as ArrayBuffer
         this.socket.onopen = () => {
             console.log("Connected to server");
             this.socket.send(JSON.stringify({
