@@ -35,8 +35,14 @@ export function handleServerMessage(event) {
             console.log("Calculated server time offset:", offset);
             return;
         }
-        case "movement":
-            break;
+        case "batch_update":
+            // Handle batched updates - process all updates at once
+            if (data.updates && Array.isArray(data.updates)) {
+                data.updates.forEach(update => {
+                    updateGameObject(this, update);
+                });
+            }
+            return;
         case "hit":
             handleHit(this, data);
             break;
@@ -47,8 +53,10 @@ export function handleServerMessage(event) {
             handleRespawn(this, data);
             break;
         default:
-            console.warn("Unknown message type:", data.type);
+            console.warn("Unknown message type:", data.messageType);
+            return;
     }
+    // After handling special events, update the game object state
     updateGameObject(this, data);
 }
 
